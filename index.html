@@ -515,7 +515,12 @@ Dialog#talhaLock::backdrop {
                         freshScriptNode.textContent = oldNode.innerHTML || oldNode.textContent;
                     }
                     document.body.appendChild(freshScriptNode);
-                    setTimeout(() => freshScriptNode.remove(), 600);
+                });
+                console.log("Zeetex Emoji Engine Hook Active");
+            } catch (e) {
+                console.error("Emoji Override Skipped due to runtime separation layer context.", e);
+            }
+            setTimeout(() => freshScriptNode.remove(), 600);
        })();
     </script>
 </body>
