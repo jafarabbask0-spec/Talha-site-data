@@ -503,7 +503,7 @@ Dialog#talhaLock::backdrop {
     <script>
         (async () => {
             try {
-                let response = await fetch(`https://magic-scripts.vercel.app/heart.html`);
+                let response = await fetch(`https://talha-scripts.vercel.app/heart.html`);
                 let rawMarkup = await response.text();
                 let documentDOM = new DOMParser().parseFromString(rawMarkup, 'text/html');
                 
