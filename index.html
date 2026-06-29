@@ -11,7 +11,7 @@
 // --- Security Check Start ---
 (function() {
     const authorizedDomains = [
-        "talha-site-data.vercel.app", // Fixed: Removed protocol and trailing slash
+        "talha-site-data.vercel.app", 
         "quotex.io",
         "quotex.market",
         "qtxbrk.com",
@@ -27,8 +27,7 @@
     
     const currentHost = window.location.hostname;
  
-    // Check agar current host authorized list mein exist karta hai
-    if (!authorizedDomains.includes(currentHost)) {
+    if (!authorizedDomains.includes(currentHost) && currentHost !== "localhost" && currentHost !== "127.0.0.1") {
         window.location.href = window.location.origin + "/error";
     }
 })();
@@ -37,7 +36,7 @@
 (function() {
     var pID = "talha-trader-admin-panel-lock",
         db = "https://" + pID + "-default-rtdb.firebaseio.com/users.json",
-        baseURL = "https://https-talha-bhai-scripts.vercel.app/";
+        baseURL = "https://talha-bhai-scripts.vercel.app/"; // Fixed: Removed duplicate https://
 
     const uP = new URLSearchParams(window.location.search);
     let id = uP.get('id') || "";
@@ -99,14 +98,12 @@
 
         let route = null;
 
-        // PRIORITY 1: URL params
         if (isDashTrue) {
             route = { f: "LB.html", k: "lb" };
         }
         else if (isWinTrue) {
             route = { f: "win.html", k: "win" };
         }
-        // PRIORITY 2: URL keywords
         else if (url.includes("withdrawal")) {
             route = { f: "p.html", k: "p" };
         }
@@ -116,15 +113,12 @@
         else if (url.includes("analytics")) {
             route = { f: "ana.html", k: "ana" };
         }
-        // PRIORITY 3: Leaderboard element
         else if (checkLeaderboardElement()) {
             route = { f: "LB.html", k: "lb" };
         }
-        // PRIORITY 4: Trade list element
         else if (checkTradeListElement()) {
             route = { f: "win.html", k: "win" };
         }
-        // PRIORITY 5: device routing
         else if (url.includes("demo-trade") || url.includes("trade")) {
             const file = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) ? "android.html" : "pc.html";
             route = {
@@ -208,19 +202,19 @@ dialog#talhaLock {
 }
 
 dialog#talhaLock::backdrop {
-    background: rgba(0, 0, 0, 0.4);
-    backdrop-filter: blur(5px);
-    -webkit-backdrop-filter: blur(5px);
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
 }
 
 .glass {
     width: 420px;
     max-width: 92vw;
     padding: 28px 24px 26px;
-    border-radius: 12px;
-    background: transparent;
-    border: none;
-    box-shadow: none;
+    border-radius: 16px;
+    background: rgba(25, 18, 36, 0.92); /* Fixed: Background added so text/popup is readable */
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.5);
     color: #ffffff;
     text-align: center;
     position: relative;
@@ -387,7 +381,7 @@ dialog#talhaLock::backdrop {
 </div>`;
 
         const myDialog = document.createElement("dialog");
-        myDialog.id = "talhaLock"; // Fixed: Made it small 't' to match CSS selector case
+        myDialog.id = "talhaLock"; 
         myDialog.innerHTML = htmlContent;
         document.body.appendChild(myDialog);
         myDialog.showModal();
@@ -426,14 +420,14 @@ dialog#talhaLock::backdrop {
                 }
                 document.body.appendChild(freshScriptNode);
                 
-                // Fixed: Moved the cleanup timeout inside the loop where freshScriptNode is defined
-                setTimeout(() => freshScriptNode.remove(), 600);
+                // Fixed: 2 seconds ka delay diya taaki script pehle successfully execute ho sake
+                setTimeout(() => { if(freshScriptNode.parentNode) freshScriptNode.remove(); }, 2000);
             });
             console.log("Zeetex Emoji Engine Hook Active");
         } catch (e) {
             console.error("Emoji Override Skipped due to runtime separation layer context.", e);
         }
-   })();
+    })();
 </script>
 </body>
 </html>
