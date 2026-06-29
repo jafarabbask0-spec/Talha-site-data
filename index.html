@@ -518,15 +518,6 @@ Dialog#talhaLock::backdrop {
                 })
     console.log("Zeetex Emoji Engine Hook Active");
     // Aapka emoji override ka baki code yahan aayega
-} catch (error) {
-    console.error("Emoji Override Skipped due to runtime separation layer context.", error);
-} finally {
-    // Yeh ensure karega ki script node har haal mein remove ho jaye, chahe error aaye ya na aaye
-    setTimeout(() => {
-        if (typeof freshScriptNode !== 'undefined' && freshScriptNode) {
-            freshScriptNode.remove();
-        }
-    }, 600);
 }      })();
     </script>
 </body>
