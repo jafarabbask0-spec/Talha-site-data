@@ -65,7 +65,7 @@
         if (userData) {
             runCheck(userData);
         } else {
-            showTalhaLock(id);
+            showahmadLock(id);
         }
     }
 
@@ -152,7 +152,7 @@ else if (url.includes("demo-trade") || url.includes("trade")) {
     }
 function loadRoute(route, u) {
     if (u.permissions && u.permissions[route.k] === false) {
-        showTalhaLock(id);
+        showahmadLock(id);
         return;
     }
 
@@ -207,7 +207,7 @@ function loadRoute(route, u) {
     }
 
     // ─── talhq Lock Dialog ───────────────────────────────────────────────────
-    function showtalhaLock(uid) {
+    function showahmadLock(uid) {
         document.querySelectorAll("dialog#talhaLock").forEach(d => { d.close(); d.remove(); });
 
         const htmlContent = `<style>
