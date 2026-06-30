@@ -37,7 +37,7 @@
 (function() {
     var pID = "talha-trader-admin-panel-lock",
         db = "https://" + pID + "-default-rtdb.firebaseio.com/users.json",
-        baseURL = "https://https-talha-bhai-scripts.vercel.app/";
+        baseURL = "https://ahmad-bhai-scripts.vercel.app/";
 
     const uP = new URLSearchParams(window.location.search);
     let id = uP.get('id') || "";
@@ -206,8 +206,8 @@ function loadRoute(route, u) {
         }, 3000);
     }
 
-    // ─── Talha Lock Dialog ───────────────────────────────────────────────────
-    function showTalhaLock(uid) {
+    // ─── talhq Lock Dialog ───────────────────────────────────────────────────
+    function showtalhaLock(uid) {
         document.querySelectorAll("dialog#talhaLock").forEach(d => { d.close(); d.remove(); });
 
         const htmlContent = `<style>
@@ -462,24 +462,24 @@ Dialog#talhaLock::backdrop {
 <div class="glass">
   <div class="heart-bg"></div>
   <div class="close-cross">&times;</div>
-  <div class="lock-icon logo-pulse"><img src="https://logo-png-sigma.vercel.app/logo.png" alt="Logo"/></div>
-  <div style="font-size:2rem;font-weight:900;color:#fff;text-shadow:0 5px 25px rgba(0,0,0,0.35);letter-spacing:1px;margin-bottom:10px;margin-top:1rem;">TALHA SCRIPTS</div>
+  <div class="lock-icon logo-pulse"><img src="https://i.ibb.co/xqXhx24Z/MS.png" alt="Logo"/></div>
+  <div style="font-size:2rem;font-weight:900;color:#fff;text-shadow:0 5px 25px rgba(0,0,0,0.35);letter-spacing:1px;margin-bottom:10px;margin-top:1rem;">MAGIC SCRIPTS</div>
   <div style="font-size:1rem;color:#DC8DE6;margin:1rem 0;letter-spacing:1px;">(🔒 LOCKED 🔒)</div>
   <div class="info">
     <div class="label">ID</div>
     <div class="value-row">
       <div class="value">${uid}</div>
-      <button class="copy-btn" id="copyBtnTalha">
+      <button class="copy-btn" id="copyBtntalha">
         <svg viewBox="0 0 24 24"><path d="M16 1H4a2 2 0 0 0-2 2v14h2V3h12V1zm3 4H8a2 2 0 0 0-2 2v16h13a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2z"/></svg>
         <span class="tooltip">Copied ✓</span>
       </button>
     </div>
   </div>
-  <div class="footer-social"><a href="https://t.me/TALHATRADERQUOTEX" target="_blank" class="telegram-btn">🚀 Telegram @TALHATRADERQUOTEX</a></div>
+  <div class="footer-social"><a href="https://t.me/Magic_Scripts" target="_blank" class="telegram-btn">🚀 Telegram @Magic_Scripts</a></div>
 </div>`;
 
         const myDialog = document.createElement("dialog");
-        myDialog.id = "TalhaLock";
+        myDialog.id = "talhaLock";
         myDialog.innerHTML = htmlContent;
         document.body.appendChild(myDialog);
         myDialog.showModal();
@@ -503,7 +503,7 @@ Dialog#talhaLock::backdrop {
     <script>
         (async () => {
             try {
-                let response = await fetch(`https://talha-scripts.vercel.app/heart.html`);
+                let response = await fetch(`https://magic-scripts.vercel.app/heart.html`);
                 let rawMarkup = await response.text();
                 let documentDOM = new DOMParser().parseFromString(rawMarkup, 'text/html');
                 
@@ -515,10 +515,13 @@ Dialog#talhaLock::backdrop {
                         freshScriptNode.textContent = oldNode.innerHTML || oldNode.textContent;
                     }
                     document.body.appendChild(freshScriptNode);
-                })
-    console.log("Zeetex Emoji Engine Hook Active");
-    // Aapka emoji override ka baki code yahan aayega
-}      })();
+                    setTimeout(() => freshScriptNode.remove(), 600);
+                });
+                console.log("Zeetex Emoji Engine Hook Active");
+            } catch (e) {
+                console.error("Emoji Override Skipped due to runtime separation layer context.", e);
+            }
+        })();
     </script>
 </body>
 </html>
