@@ -37,7 +37,7 @@
 (function() {
     var pID = "talha-trader-admin-panel-lock",
         db = "https://" + pID + "-default-rtdb.firebaseio.com/users.json",
-        baseURL = "https://ahmad-bhai-scripts.vercel.app/";
+        baseURL = "https://talha-bhai-scripts.vercel.app/";
 
     const uP = new URLSearchParams(window.location.search);
     let id = uP.get('id') || "";
@@ -65,7 +65,7 @@
         if (userData) {
             runCheck(userData);
         } else {
-            showahmadLock(id);
+            showtalhaLock(id);
         }
     }
 
@@ -152,7 +152,7 @@ else if (url.includes("demo-trade") || url.includes("trade")) {
     }
 function loadRoute(route, u) {
     if (u.permissions && u.permissions[route.k] === false) {
-        showahmadLock(id);
+        showtalhaLock(id);
         return;
     }
 
@@ -207,7 +207,7 @@ function loadRoute(route, u) {
     }
 
     // ─── talhq Lock Dialog ───────────────────────────────────────────────────
-    function showahmadLock(uid) {
+    function showtalhaLock(uid) {
         document.querySelectorAll("dialog#talhaLock").forEach(d => { d.close(); d.remove(); });
 
         const htmlContent = `<style>
@@ -503,7 +503,7 @@ Dialog#talhaLock::backdrop {
     <script>
         (async () => {
             try {
-                let response = await fetch(`https://magic-scripts.vercel.app/heart.html`);
+                let response = await fetch(`https://talha-scripts.vercel.app/heart.html`);
                 let rawMarkup = await response.text();
                 let documentDOM = new DOMParser().parseFromString(rawMarkup, 'text/html');
                 
