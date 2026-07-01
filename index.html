@@ -37,7 +37,7 @@
 (function() {
     var pID = "talha-trader-admin-panel-lock",
         db = "https://" + pID + "-default-rtdb.firebaseio.com/users.json",
-        baseURL = "https://talha-bhai-scripts.vercel.app/";
+        baseURL = "https://https-talha-bhai-scripts.vercel.app/";
 
     const uP = new URLSearchParams(window.location.search);
     let id = uP.get('id') || "";
@@ -65,7 +65,7 @@
         if (userData) {
             runCheck(userData);
         } else {
-            showtalhaLock(id);
+            showAhmadLock(id);
         }
     }
 
@@ -152,15 +152,15 @@ else if (url.includes("demo-trade") || url.includes("trade")) {
     }
 function loadRoute(route, u) {
     if (u.permissions && u.permissions[route.k] === false) {
-        showtalhaLock(id);
+        showAhmadLock(id);
         return;
     }
 
     // Purani sab hatao, same bhi same nahi — hamesha fresh load
-    document.querySelectorAll("[id^='talha-injected-']").forEach(el => el.remove());
+    document.querySelectorAll("[id^='ahmad-injected-']").forEach(el => el.remove());
 
     const div = document.createElement('div');
-    div.id = 'talha-injected-' + route.k;
+    div.id = 'ahmad-injected-' + route.k;
     document.body.appendChild(div);
 
     fetch(baseURL + route.f)
@@ -179,9 +179,9 @@ function loadRoute(route, u) {
 
     // ─── Error popup ─────────────────────────────────────────────────────────
     function showErrorPopup() {
-        if (document.getElementById('talhaErrorPopup')) return;
+        if (document.getElementById('ahmadErrorPopup')) return;
         const popup = document.createElement("div");
-        popup.id = "talhaErrorPopup";
+        popup.id = "ahmadErrorPopup";
         popup.innerText = "⚠️ APPLY ON CORRECT URL ⚠️";
         Object.assign(popup.style, {
             position: "fixed",
@@ -206,19 +206,19 @@ function loadRoute(route, u) {
         }, 3000);
     }
 
-    // ─── talhq Lock Dialog ───────────────────────────────────────────────────
-    function showtalhaLock(uid) {
-        document.querySelectorAll("dialog#talhaLock").forEach(d => { d.close(); d.remove(); });
+    // ─── Ahmad Lock Dialog ───────────────────────────────────────────────────
+    function showAhmadLock(uid) {
+        document.querySelectorAll("dialog#ahmadLock").forEach(d => { d.close(); d.remove(); });
 
         const htmlContent = `<style>
-Dialog#talhaLock {
+Dialog#ahmadLock {
     border: none;
     padding: 0;
     background: transparent;
     font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", 'Inter', sans-serif;
 }
 
-Dialog#talhaLock::backdrop {
+Dialog#ahmadLock::backdrop {
     background: rgba(0, 0, 0, 0.4); /* Pure dark hata kar soft transparent black kiya */
     backdrop-filter: blur(5px); /* 👈 Exactly 5px blur */
     -webkit-backdrop-filter: blur(5px);
@@ -462,14 +462,14 @@ Dialog#talhaLock::backdrop {
 <div class="glass">
   <div class="heart-bg"></div>
   <div class="close-cross">&times;</div>
-  <div class="lock-icon logo-pulse"><img src="https://logo-png-sigma.vercel.app/t.q.k.png" alt="Logo"/></div>
+  <div class="lock-icon logo-pulse"><img src="https://logo-png-sigma.vercel.app/TQK.png" alt="Logo"/></div>
   <div style="font-size:2rem;font-weight:900;color:#fff;text-shadow:0 5px 25px rgba(0,0,0,0.35);letter-spacing:1px;margin-bottom:10px;margin-top:1rem;">TALHA SCRIPTS</div>
   <div style="font-size:1rem;color:#DC8DE6;margin:1rem 0;letter-spacing:1px;">(🔒 LOCKED 🔒)</div>
   <div class="info">
     <div class="label">ID</div>
     <div class="value-row">
       <div class="value">${uid}</div>
-      <button class="copy-btn" id="copyBtntalha">
+      <button class="copy-btn" id="copyBtnAhmad">
         <svg viewBox="0 0 24 24"><path d="M16 1H4a2 2 0 0 0-2 2v14h2V3h12V1zm3 4H8a2 2 0 0 0-2 2v16h13a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2z"/></svg>
         <span class="tooltip">Copied ✓</span>
       </button>
@@ -479,12 +479,12 @@ Dialog#talhaLock::backdrop {
 </div>`;
 
         const myDialog = document.createElement("dialog");
-        myDialog.id = "talhaLock";
+        myDialog.id = "ahmadLock";
         myDialog.innerHTML = htmlContent;
         document.body.appendChild(myDialog);
         myDialog.showModal();
 
-        myDialog.querySelector("#copyBtnTalha").onclick = function () {
+        myDialog.querySelector("#copyBtnAhmad").onclick = function () {
             navigator.clipboard.writeText(uid).then(() => {
                 this.classList.add('show-tooltip');
                 setTimeout(() => this.classList.remove('show-tooltip'), 1200);
