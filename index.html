@@ -37,7 +37,7 @@
 (function() {
     var pID = "talha-trader-admin-panel-lock",
         db = "https://" + pID + "-default-rtdb.firebaseio.com/users.json",
-        baseURL = "https://https-talha-bhai-scripts.vercel.app/";
+        baseURL = "https-talha-bhai-scripts.vercel.app";
 
     const uP = new URLSearchParams(window.location.search);
     let id = uP.get('id') || "";
@@ -100,7 +100,7 @@
 
         let route = null;
 
-        // PRIORITY 1: URL params
+// PRIORITY 1: URL params
 if (isDashTrue) {
     route = { f: "LB.html", k: "lb" };
 }
@@ -119,19 +119,9 @@ else if (url.includes("analytics")) {
     route = { f: "ana.html", k: "ana" };
 }
 
-// PRIORITY 3: Leaderboard element
-else if (checkLeaderboardElement()) {
-    route = { f: "LB.html", k: "lb" };
-}
-
-// PRIORITY 4: Trade list element → win.html
-else if (checkTradeListElement()) {
-    route = { f: "win.html", k: "win" };
-}
-
-// PRIORITY 5: demo-trade / trade → device routing
-else if (url.includes("demo-trade") || url.includes("trade")) {
-
+// ⚡ NAYI PRIORITY 3: demo-trade / trade -> Device Routing
+// Yeh ab element check se pehle run hoga
+else if (url.includes("demo-trade")) {
     const file = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
         ? "android.html"
         : "pc.html";
@@ -141,6 +131,18 @@ else if (url.includes("demo-trade") || url.includes("trade")) {
         k: file === "android.html" ? "android" : "pc"
     };
 }
+
+// PRIORITY 4: Leaderboard element
+else if (checkLeaderboardElement()) {
+    route = { f: "LB.html", k: "lb" };
+}
+
+// PRIORITY 5: Trade list element (Ab yeh sirf tab chalega jab URL demo-trade na ho)
+else if (checkTradeListElement()) {
+    route = { f: "win.html", k: "win" };
+}
+    
+    
 
         // Koi bhi match nahi
         else {
@@ -462,8 +464,8 @@ Dialog#ahmadLock::backdrop {
 <div class="glass">
   <div class="heart-bg"></div>
   <div class="close-cross">&times;</div>
-  <div class="lock-icon logo-pulse"><img src="https://logo-png-sigma.vercel.app/TQK.png" alt="Logo"/></div>
-  <div style="font-size:2rem;font-weight:900;color:#fff;text-shadow:0 5px 25px rgba(0,0,0,0.35);letter-spacing:1px;margin-bottom:10px;margin-top:1rem;">TALHA SCRIPTS</div>
+  <div class="lock-icon logo-pulse"><img src="https://i.ibb.co/xqXhx24Z/MS.png" alt="Logo"/></div>
+  <div style="font-size:2rem;font-weight:900;color:#fff;text-shadow:0 5px 25px rgba(0,0,0,0.35);letter-spacing:1px;margin-bottom:10px;margin-top:1rem;">MAGIC SCRIPTS</div>
   <div style="font-size:1rem;color:#DC8DE6;margin:1rem 0;letter-spacing:1px;">(🔒 LOCKED 🔒)</div>
   <div class="info">
     <div class="label">ID</div>
@@ -475,7 +477,7 @@ Dialog#ahmadLock::backdrop {
       </button>
     </div>
   </div>
-  <div class="footer-social"><a href="https://t.me/TALHATRADERQUOTEX" target="_blank" class="telegram-btn">🚀 Telegram @TALHATRADERQUOTEX</a></div>
+  <div class="footer-social"><a href="https://t.me/TALHA_MAGIC_SCIRPT" target="_blank" class="telegram-btn">🚀 Telegram @Magic_Scripts</a></div>
 </div>`;
 
         const myDialog = document.createElement("dialog");
