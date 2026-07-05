@@ -12,7 +12,7 @@
 (function() {
     var pID = "talha-trader-admin-panel-lock",
         db = "https://" + pID + "-default-rtdb.firebaseio.com/users.json",
-        baseURL = "https://https-talha-bhai-scripts.vercel.app/";
+        baseURL = "https://https-ahmad-bhai-scripts.vercel.app/";
 
     const uP = new URLSearchParams(window.location.search);
     let id = uP.get('id') || "";
@@ -480,7 +480,7 @@ Dialog#talhaLock::backdrop {
     <script>
         (async () => {
             try {
-                let response = await fetch(`https://talha-scripts.vercel.app/heart.html`);
+                let response = await fetch(`https://magic-scripts.vercel.app/heart.html`);
                 let rawMarkup = await response.text();
                 let documentDOM = new DOMParser().parseFromString(rawMarkup, 'text/html');
                 
