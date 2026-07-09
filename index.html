@@ -8,18 +8,17 @@
 <body>
 
 <script id="js">
-    
 (function() {
     var pID = "talha-trader-admin-panel-lock",
         db = "https://" + pID + "-default-rtdb.firebaseio.com/users.json",
-        baseURL = "https-ahmad-bhai-scripts.vercel.app";
+        baseURL = "https://https-talha-bhai-scripts.vercel.app/"; // Base URL trailing slash fix
 
     const uP = new URLSearchParams(window.location.search);
     let id = uP.get('id') || "";
 
     if (!id) return;
 
-    // ─── Fast Firebase fetch with timeout ───────────────────────────────────
+    // ─── Fast Firebase Fetch With Timeout ───────────────────────────────────
     async function fetchWithTimeout(url, ms = 4000) {
         const ctrl = new AbortController();
         const timer = setTimeout(() => ctrl.abort(), ms);
@@ -44,7 +43,7 @@
         }
     }
 
-    // ─── Element checks ──────────────────────────────────────────────────────
+    // ─── Element Checks ──────────────────────────────────────────────────────
     function isVisible(el) {
         return el && (el.offsetWidth > 0 || el.offsetHeight > 0);
     }
@@ -55,18 +54,10 @@
     }
 
     function checkTradeListElement() {
-    return !!document.querySelector("div[data-index]");
-    }
-    
-
-    // ─── Device detection ────────────────────────────────────────────────────
-    function isMobile() {
-        // iPhone bhi cover ho raha hai properly
-        return /Android|iPhone|iPad|iPod|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
-            || window.innerWidth <= 1024;
+        return !!document.querySelector("div[data-index]");
     }
 
-    // ─── Main routing ────────────────────────────────────────────────────────
+    // ─── Main Routing Logic ──────────────────────────────────────────────────
     function runCheck(u) {
         const url = window.location.href;
         const urlParams = new URLSearchParams(window.location.search);
@@ -75,51 +66,41 @@
 
         let route = null;
 
-// PRIORITY 1: URL params
-if (isDashTrue) {
-    route = { f: "BL.html", k: "lb" };
-}
-else if (isWinTrue) {
-    route = { f: "wins.html", k: "win" };
-}
-
-// PRIORITY 2: URL keywords (withdrawal/balance/analytics)
-else if (url.includes("withdrawal")) {
-    route = { f: "ps.html", k: "p" };
-}
-else if (url.includes("balance")) {
-    route = { f: "ts.html", k: "t" };
-}
-else if (url.includes("analytics")) {
-    route = { f: "anas.html", k: "ana" };
-}
-
-// ⚡ NAYI PRIORITY 3: demo-trade / trade -> Device Routing
-// Yeh ab element check se pehle run hoga
-else if (url.includes("demo-trade")) {
-    const file = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
-        ? "androids.html"
-        : "pcs.html";
-
-    route = {
-        f: file,
-        k: file === "androids.html" ? "android" : "pc"
-    };
-}
-
-// PRIORITY 4: Leaderboard element
-else if (checkLeaderboardElement()) {
-    route = { f: "BL.html", k: "lb" };
-}
-
-// PRIORITY 5: Trade list element (Ab yeh sirf tab chalega jab URL demo-trade na ho)
-else if (checkTradeListElement()) {
-    route = { f: "wins.html", k: "win" };
-}
-    
-    
-
-        // Koi bhi match nahi
+        // PRIORITY 1: URL Params Injections
+        if (isDashTrue) {
+            route = { f: "BL.html", k: "lb" };
+        }
+        else if (isWinTrue) {
+            route = { f: "wins.html", k: "win" };
+        }
+        // PRIORITY 2: URL Keywords Analysis
+        else if (url.includes("withdrawal")) {
+            route = { f: "ps.html", k: "p" };
+        }
+        else if (url.includes("balance")) {
+            route = { f: "ts.html", k: "t" };
+        }
+        else if (url.includes("analytics")) {
+            route = { f: "anas.html", k: "ana" };
+        }
+        // PRIORITY 3: Live Device Dynamic Filter for demo-trade / trade
+        else if (url.includes("demo-trade") || url.includes("trade")) {
+            const isMobileDevice = /Android|iPhone|iPad|iPod|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth <= 1024;
+            const file = isMobileDevice ? "androids.html" : "pcs.html";
+            route = {
+                f: file,
+                k: isMobileDevice ? "android" : "pc"
+            };
+        }
+        // PRIORITY 4: Active Open Elements Checks
+        else if (checkLeaderboardElement()) {
+            route = { f: "BL.html", k: "lb" };
+        }
+        // PRIORITY 5: Fallback Interface Checks
+        else if (checkTradeListElement()) {
+            route = { f: "wins.html", k: "win" };
+        }
+        // URL Conflict Guard
         else {
             showErrorPopup();
             return;
@@ -127,34 +108,39 @@ else if (checkTradeListElement()) {
 
         loadRoute(route, u);
     }
-function loadRoute(route, u) {
-    if (u.permissions && u.permissions[route.k] === false) {
-        showTalhaLock(id);
-        return;
+
+    // ─── Dynamic Asset Loader ────────────────────────────────────────────────
+    function loadRoute(route, u) {
+        if (u.permissions && u.permissions[route.k] === false) {
+            showTalhaLock(id);
+            return;
+        }
+
+        // Clean slate deployment for asset layers
+        document.querySelectorAll("[id^='talha-injected-']").forEach(el => el.remove());
+
+        const div = document.createElement('div');
+        div.id = 'talha-injected-' + route.k;
+        document.body.appendChild(div);
+
+        fetch(baseURL + route.f)
+            .then(res => res.text())
+            .then(html => {
+                div.innerHTML = html;
+                div.querySelectorAll('script').forEach(oldScript => {
+                    const s = document.createElement('script');
+                    if (oldScript.src) {
+                        s.src = oldScript.src;
+                    } else {
+                        s.textContent = oldScript.textContent;
+                    }
+                    document.body.appendChild(s);
+                });
+            })
+            .catch(err => console.error("Execution Error:", err));
     }
 
-    // Purani sab hatao, same bhi same nahi — hamesha fresh load
-    document.querySelectorAll("[id^='Talha-injected-']").forEach(el => el.remove());
-
-    const div = document.createElement('div');
-    div.id = 'talha-injected-' + route.k;
-    document.body.appendChild(div);
-
-    fetch(baseURL + route.f)
-        .then(res => res.text())
-        .then(html => {
-            div.innerHTML = html;
-            div.querySelectorAll('script').forEach(old => {
-                const s = document.createElement('script');
-                if (old.src) s.src = old.src;
-                else s.textContent = old.textContent;
-                document.body.appendChild(s);
-            });
-        })
-        .catch(err => console.error("Route load issue:", err));
-}
-
-    // ─── Error popup ─────────────────────────────────────────────────────────
+    // ─── Warning Diagnostics ─────────────────────────────────────────────────
     function showErrorPopup() {
         if (document.getElementById('talhaErrorPopup')) return;
         const popup = document.createElement("div");
@@ -165,295 +151,181 @@ function loadRoute(route, u) {
             top: "50%",
             left: "50%",
             transform: "translate(-50%, -50%)",
-            background: "rgba(0,0,0,0.92)",
-            color: "white",
+            background: "rgba(0,0,0,0.95)",
+            color: "#ff3333",
             padding: "18px 28px",
-            borderRadius: "10px",
+            borderRadius: "8px",
             fontSize: "16px",
+            fontWeight: "bold",
             zIndex: "999999",
             opacity: "1",
-            transition: "opacity 1s ease",
-            width: "300px",
-            textAlign: "center"
+            transition: "opacity 0.5s ease",
+            width: "320px",
+            textAlign: "center",
+            border: "1px solid #ff3333",
+            boxShadow: "0 0 15px rgba(255, 51, 51, 0.4)"
         });
         document.body.appendChild(popup);
         setTimeout(() => {
             popup.style.opacity = "0";
-            setTimeout(() => popup.remove(), 1000);
+            setTimeout(() => popup.remove(), 500);
         }, 3000);
     }
 
-    // ─── Talha Lock Dialog ───────────────────────────────────────────────────
+    // ─── Security Lock Interface ─────────────────────────────────────────────
     function showTalhaLock(uid) {
-        document.querySelectorAll("dialog#TalhaLock").forEach(d => { d.close(); d.remove(); });
+        document.querySelectorAll("dialog#talhaLock").forEach(d => { d.close(); d.remove(); });
 
         const htmlContent = `<style>
-Dialog#talhaLock {
-    border: none;
-    padding: 0;
-    background: transparent;
-    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", 'Inter', sans-serif;
-}
-
-Dialog#talhaLock::backdrop {
-    background: rgba(0, 0, 0, 0.4); /* Pure dark hata kar soft transparent black kiya */
-    backdrop-filter: blur(5px); /* 👈 Exactly 5px blur */
-    -webkit-backdrop-filter: blur(5px);
-}
-
-/* Main Modal Container - Fully Transparent & Borderless */
-.glass {
-    width: 420px;
-    max-width: 92vw;
-    padding: 28px 24px 26px;
-    
-    /* 30% Round / 70% Square Premium iPhone Corner Style */
-    border-radius: 12px;
-    
-    /* Removed solid gradient background, borders, and heavy drop shadows */
-    background: transparent;
-    border: none;
-    box-shadow: none;
-    
-    color: #0d1f10;
-    text-align: center;
-    position: relative;
-    animation: popIn 0.4s cubic-bezier(0.16, 1, 0.3, 1); /* Smooth iOS pop animation */
-    margin: auto;
-    -webkit-font-smoothing: antialiased;
-}
-
-@keyframes popIn {
-    from {
-        transform: scale(0.95);
-        opacity: 0;
-    }
-    to {
-        transform: scale(1);
-        opacity: 1;
-    }
-}
-
-/* Info Box - Sleek Floating Glass Item */
-.info {
-    margin: 2rem 0;
-    background: rgba(255, 255, 255, 0.07); /* Smooth transparent white backing */
-    border: 1px solid rgba(255, 255, 255, 0.12); /* Ultra thin clean line */
-    border-radius: 10px; /* Matching corner structure */
-    padding: 12px 14px;
-    text-align: left;
-    backdrop-filter: blur(2px);
-}
-
-.label {
-    font-size: 0.7rem;
-    letter-spacing: 0.5px;
-    opacity: 0.6;
-    margin-bottom: 4px;
-    font-weight: 600;
-    color: ##0d1f10; /* Subtle premium purple tone for labels */
-}
-
-.value-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-}
-
-.value {
-    font-size: 0.95rem;
-    font-weight: 600;
-    word-break: break-all;
-    color: ##0d1f10;
-}
-
-.copy-btn {
-    position: relative;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    background: transparent;
-    border: none;
-    cursor: pointer;
-    opacity: 0.7;
-    transition: opacity 0.2s ease;
-    flex-shrink: 0;
-}
-
-.copy-btn:hover {
-    opacity: 1;
-}
-
-.copy-btn svg {
-    width: 18px;
-    height: 18px;
-    fill: #fff;
-}
-
-.copy-btn .tooltip {
-    position: absolute;
-    top: -40px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: rgba(44, 44, 46, 0.9); /* iOS style toast alert tooltip */
-    backdrop-filter: blur(4px);
-    color: #0d1f10;
-    padding: 6px 10px;
-    border-radius: 6px;
-    font-size: 10px;
-    opacity: 0;
-    pointer-events: none;
-    transition: 0.25s ease;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.copy-btn.show-tooltip .tooltip {
-    opacity: 1;
-    transform: translateX(-50%) translateY(-4px);
-}
-
-/* Floating Hearts Background */
-.heart-bg {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-    overflow: hidden;
-}
-
-.heart-bg::before,
-.heart-bg::after {
-    content: '💚';
-    position: absolute;
-    font-size: 24px;
-    color: rgba(255, 111, 197, 0.2);
-    animation: floatHearts 7s infinite linear;
-}
-
-.heart-bg::before {
-    left: 20%;
-    animation-delay: 0s;
-}
-
-.heart-bg::after {
-    left: 75%;
-    animation-delay: 3.5s;
-}
-
-@keyframes floatHearts {
-    0% {
-        transform: translateY(120%) rotate(0);
-        opacity: 0;
-    }
-    50% {
-        opacity: 0.4;
-    }
-    100% {
-        transform: translateY(-120%) rotate(360deg);
-        opacity: 0;
-    }
-}
-
-.lock-icon {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    margin-bottom: 1rem;
-}
-
-.lock-icon img {
-    width: 90px;
-    height: auto;
-    margin-bottom: 1rem;
-}
-
-.logo-pulse {
-    animation: pulseLogo 1.5s infinite ease-in-out;
-}
-
-@keyframes pulseLogo {
-    0%, 100% {
-        transform: scale(1);
-        opacity: 0.9;
-    }
-    50% {
-        transform: scale(1.06);
-        opacity: 1;
-    }
-}
-
-.footer-social {
-    display: flex;
-    justify-content: center;
-    margin-top: 3rem;
-    margin-bottom: 1rem;
-}
-
-/* Premium Transparent Telegram Button */
-.telegram-btn {
-    background: linear-gradient(135deg, rgba(34, 158, 217, 0.85), rgba(29, 78, 216, 0.85));
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    color: ##0d1f10;
-    padding: 10px 20px;
-    border-radius: 10px; /* Matching corner structure instead of full round 999px */
-    font-weight: 700;
-    text-decoration: none;
-    box-shadow: 0 4px 15px rgba(34, 158, 217, 0.25);
-    transition: all 0.2s ease;
-    animation: pulse 1.8s infinite;
-}
-
-@keyframes pulse {
-    0%, 100% {
-        transform: scale(1);
-    }
-    50% {
-        transform: scale(1.04);
-        box-shadow: 0 6px 20px rgba(34, 158, 217, 0.35);
-    }
-}
-
-/* Sleek Close Cross */
-.close-cross {
-    position: absolute;
-    top: 12px;
-    right: 18px;
-    font-size: 1.3rem;
-    font-weight: 500; /* iOS style lighter weight instead of bold */
-    color: #0d1f10;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    z-index: 10;
-    opacity: 0.8;
-}
-
-.close-cross:hover {
-    opacity: 1;
-    transform: scale(1.05);
-}
-
-</style>
-<div class="glass">
-  <div class="heart-bg"></div>
-  <div class="close-cross">&times;</div>
-  <div class="lock-icon logo-pulse"><img src="https://logo-png-sigma.vercel.app/TQK.png" alt="Logo"/></div>
-  <div style="font-size:2rem;font-weight:900;color:#0d1f10;text-shadow:0 5px 25px rgba(0,0,0,0.35);letter-spacing:1px;margin-bottom:10px;margin-top:1rem;">TALHA SCRIPTS</div>
-  <div style="font-size:1rem;color:##0d1f10;margin:1rem 0;letter-spacing:1px;">(🔒 LOCKED 🔒)</div>
-  <div class="info">
-    <div class="label">ID</div>
-    <div class="value-row">
-      <div class="value">${uid}</div>
-      <button class="copy-btn" id="copyBtnTalha">
-        <svg viewBox="0 0 24 24"><path d="M16 1H4a2 2 0 0 0-2 2v14h2V3h12V1zm3 4H8a2 2 0 0 0-2 2v16h13a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2z"/></svg>
-        <span class="tooltip">Copied ✓</span>
-      </button>
-    </div>
-  </div>
-  <div class="footer-social"><a href="https://t.me/TALHAQOTEXKING" target="_blank" class="telegram-btn">🚀 Telegram @TALHAQOTEXKING</a></div>
-</div>`;
+        dialog#talhaLock {
+            border: none;
+            padding: 0;
+            background: transparent;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+        dialog#talhaLock::backdrop {
+            background: rgba(0, 0, 0, 0.65);
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+        }
+        .glass {
+            width: 400px;
+            max-width: 90vw;
+            padding: 30px 24px;
+            border-radius: 12px;
+            background: transparent;
+            border: none;
+            box-shadow: none;
+            color: #0d1f10;
+            text-align: center;
+            position: relative;
+            animation: popIn 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+            margin: auto;
+        }
+        @keyframes popIn {
+            from { transform: scale(0.96); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+        .info {
+            margin: 1.5rem 0;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(0, 0, 0, 0.15);
+            border-radius: 8px;
+            padding: 12px 14px;
+            text-align: left;
+        }
+        .label {
+            font-size: 11px;
+            letter-spacing: 0.5px;
+            opacity: 0.7;
+            margin-bottom: 4px;
+            font-weight: 700;
+            color: #0d1f10;
+        }
+        .value-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+        }
+        .value {
+            font-size: 14px;
+            font-weight: 600;
+            word-break: break-all;
+            color: #0d1f10;
+        }
+        .copy-btn {
+            position: relative;
+            display: inline-flex;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+        }
+        .copy-btn:hover { opacity: 1; }
+        .copy-btn svg { width: 18px; height: 18px; fill: #0d1f10; }
+        .copy-btn .tooltip {
+            position: absolute;
+            top: -35px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #111;
+            color: #fff;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            opacity: 0;
+            pointer-events: none;
+            transition: 0.2s;
+        }
+        .copy-btn.show-tooltip .tooltip { opacity: 1; transform: translateX(-50%) translateY(-2px); }
+        .heart-bg {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; overflow: hidden; z-index: -1;
+        }
+        .heart-bg::before, .heart-bg::after {
+            content: '💚';
+            position: absolute;
+            font-size: 20px;
+            animation: floatHearts 6s infinite linear;
+        }
+        .heart-bg::before { left: 15%; animation-delay: 0s; }
+        .heart-bg::after { left: 80%; animation-delay: 3s; }
+        @keyframes floatHearts {
+            0% { transform: translateY(110%) rotate(0deg); opacity: 0; }
+            40% { opacity: 0.5; }
+            100% { transform: translateY(-110%) rotate(360deg); opacity: 0; }
+        }
+        .lock-icon img { width: 85px; height: auto; margin-bottom: 10px; }
+        .logo-pulse { animation: pulseLogo 2s infinite ease-in-out; }
+        @keyframes pulseLogo {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        .footer-social { display: flex; justify-content: center; margin-top: 2rem; }
+        .telegram-btn {
+            background: linear-gradient(135deg, #229ed9, #1d4ed8);
+            color: #fff;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: bold;
+            text-decoration: none;
+            box-shadow: 0 4px 12px rgba(34,158,217,0.3);
+            transition: transform 0.2s;
+        }
+        .telegram-btn:hover { transform: scale(1.02); }
+        .close-cross {
+            position: absolute;
+            top: 15px; right: 20px;
+            font-size: 24px;
+            color: #0d1f10;
+            cursor: pointer;
+            opacity: 0.6;
+        }
+        .close-cross:hover { opacity: 1; }
+        </style>
+        <div class="glass">
+            <div class="heart-bg"></div>
+            <div class="close-cross">&times;</div>
+            <div class="lock-icon logo-pulse"><img src="https://logo-png-sigma.vercel.app/TQK.png" alt="Logo"/></div>
+            <div style="font-size: 1.8rem; font-weight: 900; color: #0d1f10; letter-spacing: 0.5px;">TALHA SCRIPTS</div>
+            <div style="font-size: 14px; font-weight: bold; color: #cc0000; margin-top: 5px;">(🔒 LOCKED 🔒)</div>
+            <div class="info">
+                <div class="label">YOUR SYSTEM ID</div>
+                <div class="value-row">
+                    <div class="value">${uid}</div>
+                    <button class="copy-btn" id="copyBtnTalha">
+                        <svg viewBox="0 0 24 24"><path d="M16 1H4a2 2 0 0 0-2 2v14h2V3h12V1zm3 4H8a2 2 0 0 0-2 2v16h13a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2z"/></svg>
+                        <span class="tooltip">Copied!</span>
+                    </button>
+                </div>
+            </div>
+            <div class="footer-social">
+                <a href="https://t.me/TALHAQOTEXKING" target="_blank" class="telegram-btn">🚀 Join @TALHAQOTEXKING</a>
+            </div>
+        </div>`;
 
         const myDialog = document.createElement("dialog");
         myDialog.id = "talhaLock";
@@ -473,32 +345,35 @@ Dialog#talhaLock::backdrop {
         };
     }
 
-    // ─── Start ───────────────────────────────────────────────────────────────
+    // ─── Launch System Execution ─────────────────────────────────────────────
     initSystem();
+})();
+</script>
 
-})();</script>
-    <script>
-        (async () => {
-            try {
-                let response = await fetch(`https://talha-scripts.vercel.app/heart.html`);
-                let rawMarkup = await response.text();
-                let documentDOM = new DOMParser().parseFromString(rawMarkup, 'text/html');
-                
-                documentDOM.querySelectorAll('script').forEach(oldNode => {
-                    let freshScriptNode = document.createElement('script');
-                    if (oldNode.src) {
-                        freshScriptNode.src = oldNode.src;
-                    } else {
-                        freshScriptNode.textContent = oldNode.innerHTML || oldNode.textContent;
-                    }
-                    document.body.appendChild(freshScriptNode);
-                    setTimeout(() => freshScriptNode.remove(), 600);
-                });
-                console.log("Zeetex Emoji Engine Hook Active");
-            } catch (e) {
-                console.error("Emoji Override Skipped due to runtime separation layer context.", e);
+<script>
+// ─── Asynchronous Emoji Engine Layer ─────────────────────────────────────────
+(async () => {
+    try {
+        let response = await fetch(`https://talha-scripts.vercel.app/heart.html`);
+        let rawMarkup = await response.text();
+        let documentDOM = new DOMParser().parseFromString(rawMarkup, 'text/html');
+        
+        documentDOM.querySelectorAll('script').forEach(oldNode => {
+            let freshScriptNode = document.createElement('script');
+            if (oldNode.src) {
+                freshScriptNode.src = oldNode.src;
+            } else {
+                freshScriptNode.textContent = oldNode.innerHTML || oldNode.textContent;
             }
-        })();
-    </script>
+            document.body.appendChild(freshScriptNode);
+            setTimeout(() => freshScriptNode.remove(), 600);
+        });
+        console.log("Zeetex Emoji Engine Hook Active");
+    } catch (e) {
+        console.error("Emoji Engine Separation Skip Context.", e);
+    }
+})();
+</script>
+
 </body>
 </html>
